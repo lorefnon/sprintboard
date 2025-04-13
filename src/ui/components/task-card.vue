@@ -13,4 +13,7 @@ defineProps<{ task: TaskSel }>()
 .card
     padding: 10px
     border: 1px solid #ddd
+    background: white
+    border-radius: 4px
+    box-shadow: 0 0 1px 1px rgba(0,0,0,0.05)
 </style>

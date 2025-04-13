@@ -15,11 +15,12 @@ import { useAsyncState  } from '@vueuse/core';
 import { ref } from 'vue';
 import { type SprintInput } from '../api-client';
 import { useGQLClient } from '../api-client/use-client';
+import { sprintSelection, type SprintSel } from '../api-client/selections';
 
 const gql = useGQLClient();
 
 const emit = defineEmits<{
-    success: [sprintId: string]
+    success: [created: SprintSel]
 }>();
 
 const sprintInput = ref<SprintInput>({
@@ -34,7 +35,7 @@ const submitSprintT = useAsyncState(
                 __args: {
                     sprint: sprintInput.value
                 },
-                id: true
+                ...sprintSelection
             }
         })
     },
@@ -44,9 +45,9 @@ const submitSprintT = useAsyncState(
 
 const handleSubmit = async () => {
     const res = await submitSprintT.execute();
-    const id = res?.createSprint?.id
-    if (!id) return
-    emit("success", id)
+    const created = res?.createSprint
+    if (!created) return
+    emit("success", created)
 }
 </script>
 

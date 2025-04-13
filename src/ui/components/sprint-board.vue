@@ -1,14 +1,17 @@
 <template lang="pug">
-.header
-    .app-title Sprint Board
-    .sprint-title {{ sprint?.title }}
-    .spacer
+n-flex.sb-header(justify="space-around", align="center")
+    .sb-app-title Sprint Board
+    n-button(string, secondary, type="tertiary").sb-sprint-title(
+        @click="activeDrawer = 'sprints'"
+    )
+        | {{ sprint?.title }}
+    .u-f-grow
     n-popover(
         placement="bottom"
         trigger="click"
     )
         template(#trigger)
-            n-button(type="primary") New Sprint
+            n-button(type="info") New Sprint
 
         new-sprint-form(
             @success="onSprintCreate"
@@ -19,51 +22,91 @@
         trigger="click"
     )
         template(#trigger)
-            n-button(type="primary") New Task
+            n-button(type="info") New Task
 
         new-task-form(
             @success="onTaskCreate"
         )
-table.tasks-table
-    thead
-        tr
-            th PENDING
-            th ONGOING
-            th COMPLETE
-    tbody
-        tr
-            td(v-for="status in allStatus")
-                task-card(
-                    v-for="t in groupedTasks[status]"
-                    :task="t"
-                )
+.sb-tasks-cols
+    .sb-task-col(v-for="status in allStatus")
+        header {{ status }}
+        .task-col-inner
+            task-card(
+                v-for="t in groupedTasks[status]"
+                :task="t"
+            )
+n-drawer(
+    :show="activeDrawer === 'sprints'"
+    v-on:hide="activeDrawer = null"
+    placement="left"
+)
+    n-drawer-content(title="Sprints")
+        sprint-selector(
+            @select="onSelectSprint"
+        )
 </template>
 
 <script setup lang="ts">
 import { useAsyncState } from "@vueuse/core";
-import { type Client } from "../api-client"
+import { type Client, type FieldsSelection, type Sprint, type SprintGenqlSelection } from "../api-client"
 import { computed, inject, onMounted, ref } from "vue";
 import TaskCard from "./task-card.vue"
 import { throwIfN } from "../../server/utils/coercions";
 import { groupBy } from "remeda";
-import { NButton, NPopover } from "naive-ui"
+import { NDrawer, NDrawerContent, NFlex, NButton, NPopover } from "naive-ui"
 import NewSprintForm from "./new-sprint-form.vue";
 import NewTaskForm from "./new-task-form.vue";
-import { sprintWithTasksSelection, type TaskSel, type SprintSel } from "../api-client/selections";
+import { type TaskSel, type SprintSel, sprintSelection, taskSelection, pageSelection } from "../api-client/selections";
+import sprintSelector from "./sprint-selector.vue";
 
 const gql = throwIfN(inject<Client>("gql"))
 
 const sprint = ref<SprintSel | null>(null)
 const tasks = ref<TaskSel[]>([]);
+const activeDrawer = ref<null | "tasks" | "sprints">(null)
 
-const fetchLatestSprintQ = useAsyncState(() =>
-    gql.query({ latestSprint: sprintWithTasksSelection }),
+const sprintWithTasksSelection = {
+    ...sprintSelection,
+    tasks: {
+        __args: { page: { num: 1 } },
+        items: taskSelection,
+        page: pageSelection,
+    }
+} satisfies SprintGenqlSelection
+
+export type SprintWithTasksSel = FieldsSelection<Sprint, typeof sprintWithTasksSelection>
+
+const fetchLatestSprintT = useAsyncState(
+    () => gql.query({
+        latestSprint: sprintWithTasksSelection
+    }),
+    null,
+    { immediate: false }
+)
+
+const fetchSprintTasksT = useAsyncState(
+    async () => {
+        const sprintId = sprint.value?.id
+        if (!sprintId) return null;
+        const res = await gql.query({
+            tasks: {
+                __args: {
+                    filters: { sprintId },
+                    page: { num: 1 }
+                },
+                items: {
+                    ...taskSelection
+                }
+            }
+        });
+        return res.tasks?.items;
+    },
     null,
     { immediate: false }
 )
 
 onMounted(() => {
-    fetchLatestSprintQ.execute().then(s => {
+    fetchLatestSprintT.execute().then(s => {
         sprint.value = s?.latestSprint ?? null
         tasks.value = s?.latestSprint?.tasks?.items ?? []
     })
@@ -79,8 +122,21 @@ const groupedTasks = computed(() => {
 
 const allStatus = ['PENDING', 'ONGOING', 'COMPLETE'] as const
 
-const onSprintCreate = async (id: string) => {
-    fetchLatestSprintQ.execute();
+const onSprintCreate = async (created: SprintSel) => {
+    sprint.value = created
+    tasks.value = []
+    fetchSprintTasksT.execute().then(items => {
+        if (items) tasks.value = items;
+    })
+}
+
+const onSelectSprint = async (selected: SprintSel) => {
+    activeDrawer.value = null
+    sprint.value = selected
+    tasks.value = []
+    fetchSprintTasksT.execute().then(items => {
+        if (items) tasks.value = items;
+    })
 }
 
 const onTaskCreate = async (id: string) => {
@@ -94,25 +150,32 @@ const onTaskCreate = async (id: string) => {
             success: true
         }
     });
-    await fetchLatestSprintQ.execute();
+    await fetchLatestSprintT.execute();
 }
 </script>
 
 <style scoped lang="sass">
-.header
-    background: #bed8eb
-    padding: 20px
+.sb-header
+    background: var(--uchu-yin-2)
+    padding: 0.5rem
+    box-shadow: 0 0 1px 1px rgba(0,0,0,0.05)
+
+.sb-tasks-cols
+    padding: 1rem
+    background: var(--uchu-gray-2)
+    height: calc(100vh - 50px - 2rem)
+    width: calc(100% - 2rem)
     display: flex
-    gap: 1rem
+    align-items: stretch
+    gap: 10px
 
-.spacer
+.sb-task-col
+    background: var(--uchu-gray-1)
+    border-radius: 4px
     flex-grow: 1
-
-.tasks-table
-    height: calc(100vh - 80px)
-    width: 100vh
-
-    td
-        border-left: 1px solid #ddd
-        vertical-align: top
+    flex-shrink: 1
+    border: 1px solid #ddd
+    vertical-align: top
+    padding: 1rem
+    box-shadow: 0 0 1px 1px rgba(0,0,0,0.05)
 </style>

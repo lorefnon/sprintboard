@@ -5,16 +5,36 @@
 
 export type Scalars = {
     Date: any,
-    Int: number,
     String: string,
+    Int: number,
     Boolean: boolean,
 }
 
+export interface AppUser {
+    email: (Scalars['String'] | null)
+    id: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    __typename: 'AppUser'
+}
+
+export interface AppUsersPage {
+    items: (AppUser[] | null)
+    __typename: 'AppUsersPage'
+}
+
 export interface Mutation {
+    addAssignee: (Result | null)
+    assignTagToSprint: (Result | null)
+    assignTagToTask: (Result | null)
     assignTaskToSprint: (Result | null)
     completeTask: (Result | null)
+    createAppUser: (AppUser | null)
     createSprint: (Sprint | null)
+    createTag: (Tag | null)
     createTask: (Task | null)
+    removeAssignee: (Result | null)
+    removeSprintTag: (Result | null)
+    removeTaskTag: (Result | null)
     startTask: (Result | null)
     __typename: 'Mutation'
 }
@@ -27,9 +47,10 @@ export interface Page {
 }
 
 export interface Query {
-    allSprints: (SprintsPage | null)
     latestSprint: (Sprint | null)
-    sprintsByTags: (SprintsPage | null)
+    sprints: (SprintsPage | null)
+    tags: (TagsPage | null)
+    tasks: (TasksPage | null)
     __typename: 'Query'
 }
 
@@ -42,6 +63,7 @@ export interface Sprint {
     createTs: (Scalars['Date'] | null)
     id: (Scalars['String'] | null)
     startTs: (Scalars['Date'] | null)
+    tags: (TagsPage | null)
     tasks: (TasksPage | null)
     title: (Scalars['String'] | null)
     updateTs: (Scalars['Date'] | null)
@@ -54,12 +76,25 @@ export interface SprintsPage {
     __typename: 'SprintsPage'
 }
 
+export interface Tag {
+    id: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    __typename: 'Tag'
+}
+
+export interface TagsPage {
+    items: (Tag[] | null)
+    __typename: 'TagsPage'
+}
+
 export interface Task {
+    assignees: (AppUsersPage | null)
     createTs: (Scalars['Date'] | null)
     endTs: (Scalars['Date'] | null)
     expectedEndTs: (Scalars['Date'] | null)
     id: (Scalars['String'] | null)
     startTs: (Scalars['Date'] | null)
+    tags: (TagsPage | null)
     title: (Scalars['String'] | null)
     updateTs: (Scalars['Date'] | null)
     __typename: 'Task'
@@ -71,19 +106,47 @@ export interface TasksPage {
     __typename: 'TasksPage'
 }
 
+export interface AppUserInput {email: Scalars['String'],name: Scalars['String']}
+
 export interface PageInput {num?: (Scalars['Int'] | null),size?: (Scalars['Int'] | null)}
 
-export interface SprintFiltersInput {tags?: (Scalars['String'][] | null)}
+export interface SprintFiltersInput {tagIds?: (Scalars['String'][] | null)}
 
 export interface SprintInput {startTS: Scalars['Date'],title: Scalars['String']}
 
+export interface TagInput {name: Scalars['String']}
+
+export interface TaskFiltersInput {assigneeIds?: (Scalars['String'][] | null),sprintId?: (Scalars['String'] | null),tagIds?: (Scalars['String'][] | null)}
+
 export interface TaskInput {expectedEndTs?: (Scalars['Date'] | null),title: Scalars['String']}
 
+export interface AppUserGenqlSelection{
+    email?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface AppUsersPageGenqlSelection{
+    items?: AppUserGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface MutationGenqlSelection{
+    addAssignee?: (ResultGenqlSelection & { __args: {assigneeId: Scalars['String'], taskId: Scalars['String']} })
+    assignTagToSprint?: (ResultGenqlSelection & { __args: {sprintId: Scalars['String'], tagId: Scalars['String']} })
+    assignTagToTask?: (ResultGenqlSelection & { __args: {tagId: Scalars['String'], taskId: Scalars['String']} })
     assignTaskToSprint?: (ResultGenqlSelection & { __args: {sprintId: Scalars['String'], taskId: Scalars['String']} })
     completeTask?: (ResultGenqlSelection & { __args: {taskId: Scalars['String']} })
+    createAppUser?: (AppUserGenqlSelection & { __args: {appUser: AppUserInput} })
     createSprint?: (SprintGenqlSelection & { __args: {sprint: SprintInput} })
+    createTag?: (TagGenqlSelection & { __args: {tag: TagInput} })
     createTask?: (TaskGenqlSelection & { __args: {task: TaskInput} })
+    removeAssignee?: (ResultGenqlSelection & { __args: {assigneeId: Scalars['String'], taskId: Scalars['String']} })
+    removeSprintTag?: (ResultGenqlSelection & { __args: {sprintId: Scalars['String'], tagId: Scalars['String']} })
+    removeTaskTag?: (ResultGenqlSelection & { __args: {tagId: Scalars['String'], taskId: Scalars['String']} })
     startTask?: (ResultGenqlSelection & { __args: {taskId: Scalars['String']} })
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -98,9 +161,10 @@ export interface PageGenqlSelection{
 }
 
 export interface QueryGenqlSelection{
-    allSprints?: (SprintsPageGenqlSelection & { __args: {page: PageInput} })
     latestSprint?: SprintGenqlSelection
-    sprintsByTags?: (SprintsPageGenqlSelection & { __args: {page: PageInput, tags: Scalars['String'][]} })
+    sprints?: (SprintsPageGenqlSelection & { __args: {filters: SprintFiltersInput, page: PageInput} })
+    tags?: TagsPageGenqlSelection
+    tasks?: (TasksPageGenqlSelection & { __args: {filters: TaskFiltersInput, page: PageInput} })
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -115,7 +179,8 @@ export interface SprintGenqlSelection{
     createTs?: boolean | number
     id?: boolean | number
     startTs?: boolean | number
-    tasks?: TasksPageGenqlSelection
+    tags?: TagsPageGenqlSelection
+    tasks?: (TasksPageGenqlSelection & { __args: {page: PageInput} })
     title?: boolean | number
     updateTs?: boolean | number
     __typename?: boolean | number
@@ -129,12 +194,27 @@ export interface SprintsPageGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TagGenqlSelection{
+    id?: boolean | number
+    name?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TagsPageGenqlSelection{
+    items?: TagGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TaskGenqlSelection{
+    assignees?: AppUsersPageGenqlSelection
     createTs?: boolean | number
     endTs?: boolean | number
     expectedEndTs?: boolean | number
     id?: boolean | number
     startTs?: boolean | number
+    tags?: TagsPageGenqlSelection
     title?: boolean | number
     updateTs?: boolean | number
     __typename?: boolean | number
@@ -147,6 +227,22 @@ export interface TasksPageGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+    const AppUser_possibleTypes: string[] = ['AppUser']
+    export const isAppUser = (obj?: { __typename?: any } | null): obj is AppUser => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isAppUser"')
+      return AppUser_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const AppUsersPage_possibleTypes: string[] = ['AppUsersPage']
+    export const isAppUsersPage = (obj?: { __typename?: any } | null): obj is AppUsersPage => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isAppUsersPage"')
+      return AppUsersPage_possibleTypes.includes(obj.__typename)
+    }
+    
 
 
     const Mutation_possibleTypes: string[] = ['Mutation']
@@ -193,6 +289,22 @@ export interface TasksPageGenqlSelection{
     export const isSprintsPage = (obj?: { __typename?: any } | null): obj is SprintsPage => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isSprintsPage"')
       return SprintsPage_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const Tag_possibleTypes: string[] = ['Tag']
+    export const isTag = (obj?: { __typename?: any } | null): obj is Tag => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTag"')
+      return Tag_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TagsPage_possibleTypes: string[] = ['TagsPage']
+    export const isTagsPage = (obj?: { __typename?: any } | null): obj is TagsPage => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTagsPage"')
+      return TagsPage_possibleTypes.includes(obj.__typename)
     }
     
 

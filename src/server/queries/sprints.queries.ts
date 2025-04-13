@@ -5,14 +5,19 @@ export type DateOrString = Date | string;
 
 export type NumberOrString = number | string;
 
-/** 'FindAll' parameters type */
-export interface IFindAllParams {
+export type NumberOrStringArray = (NumberOrString)[];
+
+export type stringArray = (string)[];
+
+/** 'FindMany' parameters type */
+export interface IFindManyParams {
   limit: NumberOrString;
   offset: NumberOrString;
+  tagIds?: NumberOrStringArray | null | void;
 }
 
-/** 'FindAll' return type */
-export interface IFindAllResult {
+/** 'FindMany' return type */
+export interface IFindManyResult {
   create_ts: Date;
   id: string;
   start_ts: Date;
@@ -20,25 +25,29 @@ export interface IFindAllResult {
   update_ts: Date;
 }
 
-/** 'FindAll' query type */
-export interface IFindAllQuery {
-  params: IFindAllParams;
-  result: IFindAllResult;
+/** 'FindMany' query type */
+export interface IFindManyQuery {
+  params: IFindManyParams;
+  result: IFindManyResult;
 }
 
-const findAllIR: any = {"usedParamSet":{"limit":true,"offset":true},"params":[{"name":"limit","required":true,"transform":{"type":"scalar"},"locs":[{"a":50,"b":56}]},{"name":"offset","required":true,"transform":{"type":"scalar"},"locs":[{"a":65,"b":72}]}],"statement":"select *\nfrom sprint\norder by start_ts desc\nlimit :limit!\noffset :offset!"};
+const findManyIR: any = {"usedParamSet":{"tagIds":true,"limit":true,"offset":true},"params":[{"name":"tagIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":73,"b":79},{"a":159,"b":165},{"a":202,"b":208}]},{"name":"limit","required":true,"transform":{"type":"scalar"},"locs":[{"a":241,"b":247}]},{"name":"offset","required":true,"transform":{"type":"scalar"},"locs":[{"a":256,"b":263}]}],"statement":"select distinct sprint.*\nfrom sprint\n    left join sprint_tag\n        on :tagIds::bigint[] is not null\n            and sprint_tag.sprint_id = sprint.id\nwhere (:tagIds is null or sprint_tag.tag_id = ANY(:tagIds))\norder by start_ts desc\nlimit :limit!\noffset :offset!"};
 
 /**
  * Query generated from SQL:
  * ```
- * select *
+ * select distinct sprint.*
  * from sprint
+ *     left join sprint_tag
+ *         on :tagIds::bigint[] is not null
+ *             and sprint_tag.sprint_id = sprint.id
+ * where (:tagIds is null or sprint_tag.tag_id = ANY(:tagIds))
  * order by start_ts desc
  * limit :limit!
  * offset :offset!
  * ```
  */
-export const findAll = new PreparedQuery<IFindAllParams,IFindAllResult>(findAllIR);
+export const findMany = new PreparedQuery<IFindManyParams,IFindManyResult>(findManyIR);
 
 
 /** 'FindLatest' parameters type */
@@ -73,51 +82,57 @@ const findLatestIR: any = {"usedParamSet":{},"params":[],"statement":"select *\n
 export const findLatest = new PreparedQuery<IFindLatestParams,IFindLatestResult>(findLatestIR);
 
 
-/** 'CountAll' parameters type */
-export type ICountAllParams = void;
+/** 'FindCount' parameters type */
+export interface IFindCountParams {
+  tagIds?: NumberOrStringArray | null | void;
+}
 
-/** 'CountAll' return type */
-export interface ICountAllResult {
+/** 'FindCount' return type */
+export interface IFindCountResult {
   count: string | null;
 }
 
-/** 'CountAll' query type */
-export interface ICountAllQuery {
-  params: ICountAllParams;
-  result: ICountAllResult;
+/** 'FindCount' query type */
+export interface IFindCountQuery {
+  params: IFindCountParams;
+  result: IFindCountResult;
 }
 
-const countAllIR: any = {"usedParamSet":{},"params":[],"statement":"select count(*)\nfrom sprint"};
+const findCountIR: any = {"usedParamSet":{"tagIds":true},"params":[{"name":"tagIds","required":false,"transform":{"type":"scalar"},"locs":[{"a":81,"b":87},{"a":167,"b":173},{"a":210,"b":216}]}],"statement":"select count(distinct sprint.id)\nfrom sprint\n    left join sprint_tag\n        on :tagIds::bigint[] is not null\n            and sprint_tag.sprint_id = sprint.id\nwhere (:tagIds is null or sprint_tag.tag_id = ANY(:tagIds))"};
 
 /**
  * Query generated from SQL:
  * ```
- * select count(*)
+ * select count(distinct sprint.id)
  * from sprint
+ *     left join sprint_tag
+ *         on :tagIds::bigint[] is not null
+ *             and sprint_tag.sprint_id = sprint.id
+ * where (:tagIds is null or sprint_tag.tag_id = ANY(:tagIds))
  * ```
  */
-export const countAll = new PreparedQuery<ICountAllParams,ICountAllResult>(countAllIR);
+export const findCount = new PreparedQuery<IFindCountParams,IFindCountResult>(findCountIR);
 
 
-/** 'CountByEachTag' parameters type */
-export interface ICountByEachTagParams {
-  tags?: string | null | void;
+/** 'FindTagWiseCounts' parameters type */
+export interface IFindTagWiseCountsParams {
+  tags?: stringArray | null | void;
 }
 
-/** 'CountByEachTag' return type */
-export interface ICountByEachTagResult {
+/** 'FindTagWiseCounts' return type */
+export interface IFindTagWiseCountsResult {
   count: string | null;
   id: string;
   name: string;
 }
 
-/** 'CountByEachTag' query type */
-export interface ICountByEachTagQuery {
-  params: ICountByEachTagParams;
-  result: ICountByEachTagResult;
+/** 'FindTagWiseCounts' query type */
+export interface IFindTagWiseCountsQuery {
+  params: IFindTagWiseCountsParams;
+  result: IFindTagWiseCountsResult;
 }
 
-const countByEachTagIR: any = {"usedParamSet":{"tags":true},"params":[{"name":"tags","required":false,"transform":{"type":"scalar"},"locs":[{"a":222,"b":226}]}],"statement":"select tag.id, tag.name, count(distinct sprint.id)::text as count\nfrom sprint\n    join sprint_tag\n        on sprint_tag.sprint_id = sprint.id\n    join tag\n        on tag.id = sprint_tag.tag_id\n            and tag.name in (:tags)\ngroup by tag.id, tag.name"};
+const findTagWiseCountsIR: any = {"usedParamSet":{"tags":true},"params":[{"name":"tags","required":false,"transform":{"type":"scalar"},"locs":[{"a":224,"b":228}]}],"statement":"select tag.id, tag.name, count(distinct sprint.id)::text as count\nfrom sprint\n    join sprint_tag\n        on sprint_tag.sprint_id = sprint.id\n    join tag\n        on tag.id = sprint_tag.tag_id\n            and tag.name = ANY(:tags::text[])\ngroup by tag.id, tag.name"};
 
 /**
  * Query generated from SQL:
@@ -128,86 +143,11 @@ const countByEachTagIR: any = {"usedParamSet":{"tags":true},"params":[{"name":"t
  *         on sprint_tag.sprint_id = sprint.id
  *     join tag
  *         on tag.id = sprint_tag.tag_id
- *             and tag.name in (:tags)
+ *             and tag.name = ANY(:tags::text[])
  * group by tag.id, tag.name
  * ```
  */
-export const countByEachTag = new PreparedQuery<ICountByEachTagParams,ICountByEachTagResult>(countByEachTagIR);
-
-
-/** 'CountByTags' parameters type */
-export interface ICountByTagsParams {
-  tags: readonly (string | null | void)[];
-}
-
-/** 'CountByTags' return type */
-export interface ICountByTagsResult {
-  count: string | null;
-}
-
-/** 'CountByTags' query type */
-export interface ICountByTagsQuery {
-  params: ICountByTagsParams;
-  result: ICountByTagsResult;
-}
-
-const countByTagsIR: any = {"usedParamSet":{"tags":true},"params":[{"name":"tags","required":false,"transform":{"type":"array_spread"},"locs":[{"a":204,"b":208}]}],"statement":"select count(distinct sprint.id)::text as count\nfrom sprint\n    join sprint_tag\n        on sprint_tag.sprint_id = sprint.id\n    join tag\n        on tag.id = sprint_tag.tag_id\n            and tag.name in (:tags)"};
-
-/**
- * Query generated from SQL:
- * ```
- * select count(distinct sprint.id)::text as count
- * from sprint
- *     join sprint_tag
- *         on sprint_tag.sprint_id = sprint.id
- *     join tag
- *         on tag.id = sprint_tag.tag_id
- *             and tag.name in (:tags)
- * ```
- */
-export const countByTags = new PreparedQuery<ICountByTagsParams,ICountByTagsResult>(countByTagsIR);
-
-
-/** 'FindAllByTags' parameters type */
-export interface IFindAllByTagsParams {
-  limit: NumberOrString;
-  offset: NumberOrString;
-  tags: readonly (string | null | void)[];
-}
-
-/** 'FindAllByTags' return type */
-export interface IFindAllByTagsResult {
-  create_ts: Date;
-  id: string;
-  start_ts: Date;
-  title: string;
-  update_ts: Date;
-}
-
-/** 'FindAllByTags' query type */
-export interface IFindAllByTagsQuery {
-  params: IFindAllByTagsParams;
-  result: IFindAllByTagsResult;
-}
-
-const findAllByTagsIR: any = {"usedParamSet":{"tags":true,"limit":true,"offset":true},"params":[{"name":"tags","required":false,"transform":{"type":"array_spread"},"locs":[{"a":172,"b":176}]},{"name":"limit","required":true,"transform":{"type":"scalar"},"locs":[{"a":208,"b":214}]},{"name":"offset","required":true,"transform":{"type":"scalar"},"locs":[{"a":223,"b":230}]}],"statement":"select sprint.*\nfrom sprint\n    join sprint_tag\n        on sprint_tag.sprint_id = sprint.id\n    join tag\n        on tag.id = sprint_tag.tag_id\n            and tag.name in (:tags)\norder by start_ts desc\nlimit :limit!\noffset :offset!"};
-
-/**
- * Query generated from SQL:
- * ```
- * select sprint.*
- * from sprint
- *     join sprint_tag
- *         on sprint_tag.sprint_id = sprint.id
- *     join tag
- *         on tag.id = sprint_tag.tag_id
- *             and tag.name in (:tags)
- * order by start_ts desc
- * limit :limit!
- * offset :offset!
- * ```
- */
-export const findAllByTags = new PreparedQuery<IFindAllByTagsParams,IFindAllByTagsResult>(findAllByTagsIR);
+export const findTagWiseCounts = new PreparedQuery<IFindTagWiseCountsParams,IFindTagWiseCountsResult>(findTagWiseCountsIR);
 
 
 /** 'InsertOne' parameters type */
@@ -293,5 +233,61 @@ const deleteOneIR: any = {"usedParamSet":{"sprintId":true},"params":[{"name":"sp
  * ```
  */
 export const deleteOne = new PreparedQuery<IDeleteOneParams,IDeleteOneResult>(deleteOneIR);
+
+
+/** 'AssignTag' parameters type */
+export interface IAssignTagParams {
+  sprintId: NumberOrString;
+  tagId: NumberOrString;
+}
+
+/** 'AssignTag' return type */
+export type IAssignTagResult = void;
+
+/** 'AssignTag' query type */
+export interface IAssignTagQuery {
+  params: IAssignTagParams;
+  result: IAssignTagResult;
+}
+
+const assignTagIR: any = {"usedParamSet":{"sprintId":true,"tagId":true},"params":[{"name":"sprintId","required":true,"transform":{"type":"scalar"},"locs":[{"a":51,"b":60}]},{"name":"tagId","required":true,"transform":{"type":"scalar"},"locs":[{"a":63,"b":69}]}],"statement":"insert into sprint_tag (sprint_id, tag_id)\nvalues (:sprintId!, :tagId!)\non conflict (sprint_id, tag_id)\ndo nothing"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * insert into sprint_tag (sprint_id, tag_id)
+ * values (:sprintId!, :tagId!)
+ * on conflict (sprint_id, tag_id)
+ * do nothing
+ * ```
+ */
+export const assignTag = new PreparedQuery<IAssignTagParams,IAssignTagResult>(assignTagIR);
+
+
+/** 'RemoveTag' parameters type */
+export interface IRemoveTagParams {
+  sprintId: NumberOrString;
+  tagId: NumberOrString;
+}
+
+/** 'RemoveTag' return type */
+export type IRemoveTagResult = void;
+
+/** 'RemoveTag' query type */
+export interface IRemoveTagQuery {
+  params: IRemoveTagParams;
+  result: IRemoveTagResult;
+}
+
+const removeTagIR: any = {"usedParamSet":{"sprintId":true,"tagId":true},"params":[{"name":"sprintId","required":true,"transform":{"type":"scalar"},"locs":[{"a":41,"b":50}]},{"name":"tagId","required":true,"transform":{"type":"scalar"},"locs":[{"a":65,"b":71}]}],"statement":"delete from sprint_tag\nwhere sprint_id = :sprintId! and tag_id = :tagId!"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * delete from sprint_tag
+ * where sprint_id = :sprintId! and tag_id = :tagId!
+ * ```
+ */
+export const removeTag = new PreparedQuery<IRemoveTagParams,IRemoveTagResult>(removeTagIR);
 
 

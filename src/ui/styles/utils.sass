@@ -1,0 +1,98 @@
+@each $dim in -10, -5, -1, 5, 10, 20, 30, 40, 50, 100, 150
+
+  @each $attr-key, $attr in (m: margin, p: padding)
+    .u-#{$attr-key}#{$dim}
+      #{$attr}: #{$dim}px
+
+    @each $dir-key, $dir in (t: top, r: right, b: bottom, l:left)
+      .u-#{$attr-key}#{$dir-key}#{$dim}
+        #{$attr}-#{$dir}: #{$dim}px
+
+    .u-#{$attr-key}y#{$dim}
+      #{$attr}-top: #{$dim}px
+      #{$attr}-bottom: #{$dim}px
+
+    .u-#{$attr-key}x#{$dim}
+      #{$attr}-left: #{$dim}px
+      #{$attr}-right: #{$dim}px
+
+@each $dir-key, $dir in (l: left, r: right, c: center)
+  .u-t#{$dir-key}
+    text-align: $dir
+
+$dirs: (top, right, left, bottom)
+
+@each $pack-dir in $dirs
+  .u-pack-#{$pack-dir}
+    position: absolute
+    @each $stick-dir in $dirs
+      @if $pack-dir != $stick-dir
+      #{$stick-dir}: 0
+
+  .u-pack-all
+    position: absolute
+    @each $stick-dir in $dirs
+      #{$stick-dir}: 0
+
+@for $fs from 1 through 6
+  .u-fs#{$fs}
+    font-size: #{$fs}rem
+
+  .u-fs#{$fs}-5
+     font-size: calc(#{$fs} + 0.5rem)
+
+@each $per in 25, 33, 50, 75, 100
+  .u-h#{$per}p
+    height: percentage(calc($per / 100))
+  .u-w#{$per}p
+    width: percentage(calc($per / 100))
+
+@each $ov in auto, hidden
+  .u-ov-#{$ov}
+    overflow: #{$ov}
+
+@each $fw in 100, 200, 300, 400, 500, 600, 700, 800, 900
+  .u-fw#{$fw}
+    font-weight: #{$fw}
+
+@each $g in 5, 10, 20
+  .u-g#{$g}
+    gap: #{$g}px
+
+@each $dir-key, $dir in (row: "row", col: "column")
+  @each $align-key, $align in (c: "center", s: "stretch")
+    .u-f-#{$dir-key}-#{$align-key}
+      display: flex
+      flex-direction: #{$dir}
+      align-items: #{$align}
+
+.u-rel
+  position: relative
+
+.u-abs
+  position: absolute
+
+.u-f-grow
+  flex-grow: 1
+.u-f-shrink
+  flex-shrink: 1
+.u-f-no-grow
+  flex-grow: 0
+.u-f-no-shrink
+  flex-shrink: 0
+
+.u-hflip
+  transform: scaleX(-1)
+
+.u-vflip
+  transform: scaleY(-1)
+
+.u-ghost-list
+  list-style-type: none
+  padding-left: 0
+
+.u-ghost-link
+  text-decoration: none !important
+
+.u-d-block
+  display: block

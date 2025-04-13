@@ -1,5 +1,5 @@
-import type { FieldsSelection } from "./runtime";
-import type { PageGenqlSelection, Sprint, SprintGenqlSelection, Task, TaskGenqlSelection } from "./schema";
+import type { FieldsSelection } from "./gen/runtime";
+import type { PageGenqlSelection, Sprint, SprintGenqlSelection, Task, TaskGenqlSelection } from "./gen/schema";
 
 export const pageSelection = {
     num: true,
@@ -29,12 +29,3 @@ export const sprintSelection = {
 
 export type SprintSel = FieldsSelection<Sprint, typeof sprintSelection>
 
-export const sprintWithTasksSelection = {
-    ...sprintSelection,
-    tasks: {
-        items: taskSelection,
-        page: pageSelection,
-    }
-} satisfies SprintGenqlSelection
-
-export type SprintWithTasksSel = FieldsSelection<Sprint, typeof sprintWithTasksSelection>

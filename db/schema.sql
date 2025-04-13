@@ -15,6 +15,36 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: app_user; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.app_user (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    email text NOT NULL
+);
+
+
+--
+-- Name: app_user_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.app_user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: app_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.app_user_id_seq OWNED BY public.app_user.id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -120,6 +150,16 @@ CREATE TABLE public.task (
 
 
 --
+-- Name: task_assignee; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.task_assignee (
+    task_id bigint NOT NULL,
+    assignee_id bigint NOT NULL
+);
+
+
+--
 -- Name: task_dependency; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -159,6 +199,13 @@ CREATE TABLE public.task_tag (
 
 
 --
+-- Name: app_user id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_user ALTER COLUMN id SET DEFAULT nextval('public.app_user_id_seq'::regclass);
+
+
+--
 -- Name: sprint id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -177,6 +224,22 @@ ALTER TABLE ONLY public.tag ALTER COLUMN id SET DEFAULT nextval('public.tag_id_s
 --
 
 ALTER TABLE ONLY public.task ALTER COLUMN id SET DEFAULT nextval('public.task_id_seq'::regclass);
+
+
+--
+-- Name: app_user app_user_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_user
+    ADD CONSTRAINT app_user_email_key UNIQUE (email);
+
+
+--
+-- Name: app_user app_user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_user
+    ADD CONSTRAINT app_user_pkey PRIMARY KEY (id);
 
 
 --
@@ -212,6 +275,30 @@ ALTER TABLE ONLY public.task
 
 
 --
+-- Name: sprint_task uq_sprint_task__sprint_id__task_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sprint_task
+    ADD CONSTRAINT uq_sprint_task__sprint_id__task_id UNIQUE (sprint_id, task_id);
+
+
+--
+-- Name: task_assignee uq_task_assignee__task_id__assignee_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.task_assignee
+    ADD CONSTRAINT uq_task_assignee__task_id__assignee_id UNIQUE (task_id, assignee_id);
+
+
+--
+-- Name: task_dependency uq_task_dependency__parent_id__child_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.task_dependency
+    ADD CONSTRAINT uq_task_dependency__parent_id__child_id UNIQUE (parent_id, child_id);
+
+
+--
 -- Name: sprint_tag fk_sprint_tag__sprint_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -241,6 +328,22 @@ ALTER TABLE ONLY public.sprint_task
 
 ALTER TABLE ONLY public.sprint_task
     ADD CONSTRAINT fk_sprint_task__task_id FOREIGN KEY (task_id) REFERENCES public.task(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: task_assignee fk_task_assignee__assignee_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.task_assignee
+    ADD CONSTRAINT fk_task_assignee__assignee_id FOREIGN KEY (assignee_id) REFERENCES public.app_user(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: task_assignee fk_task_assignee__task_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.task_assignee
+    ADD CONSTRAINT fk_task_assignee__task_id FOREIGN KEY (task_id) REFERENCES public.task(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -287,4 +390,6 @@ ALTER TABLE ONLY public.task_tag
 INSERT INTO public.schema_migrations (version) VALUES
     ('20250412174323'),
     ('20250412183249'),
-    ('20250412183252');
+    ('20250412183252'),
+    ('20250413090412'),
+    ('20250413090527');

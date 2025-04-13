@@ -35,3 +35,7 @@ export function getLimit(input: NPage) {
 export function getOffset(input: NPage) {
     return (input.num - 1) * input.size;
 }
+
+export function ensureCount(rows: { count?: string | null }[]) {
+    return rows[0]?.count ?? "0"
+}
